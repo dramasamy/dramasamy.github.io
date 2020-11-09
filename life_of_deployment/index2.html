@@ -1,0 +1,121 @@
+<div class=wsd wsd_style="earth"><pre>
+
+title: Life of Deployment API
+
+participant admin
+participant kubectl
+participant api
+participant ctrlmgr
+participant sched
+participant kubelet
+participant calico
+
+admin->kubectl: kubectl apply -f busybox.yaml
+kubectl->api: get deployment 10:26:10.744501Z
+api->kubectl: 404 not found 10:26:10.744501Z
+kubectl->api: create deployment 10:26:10.747498Z
+note over api: ResourceQuota Check 10:26:10.753543Z
+note over ctrlmgr: Adding deployment webserver
+ctrlmgr->api: create replicasets 10:26:10.760147Z
+api->kubectl: 201 - Pending 10:26:10.762419Z
+api->ctrlmgr: 201 created replica 10:26:10.764677Z
+note over ctrlmgr: ReplicaSet added.
+ctrlmgr->api: [1] deployment status update NewReplicaSetCreated - 10:26:10.766782Z
+ctrlmgr->api: [1] event - Scaled up replica set to 1 10:26:10.767242Z
+ctrlmgr->api: create pod 10:26:10.767242Z
+note over api: LimitRange check 10:26:10.770714Z
+api->ctrlmgr: [1] deployment status update response NewReplicaSetCreated 10:26:10.772139Z 
+ctrlmgr->api: [2] deployment status update MinimumReplicasUnavailable 10:26:10.773483Z
+note over sched: Attempting to schedule pod
+api->ctrlmgr: [1] event - ScalingReplicaSet event response 10:26:10.779124Z
+api->ctrlmgr: created pod, token and sa 10:26:10.779201Z
+ctrlmgr->api: [2] event - SuccessfulCreate 10:26:10.780970Z
+api->ctrlmgr: [2] deployment status update response MinimumReplicasUnavailable  10:26:10.781703Z 
+ctrlmgr->api: replicaset update Replica: 0 10:26:10.781986Z
+ctrlmgr->api: deployment status update MinimumReplicasUnavailable 10:26:10.784499Z
+sched->api: pod to node-02 binding update 10:26:10.784867Z
+note over kubelet: Receiving new POD 10:26:10.790157
+note over  kubelet: Generating status for POD 10:26:10.791983
+api->sched: replicaset update response - Replica 0 10:26:10.792354Z
+ctrlmgr->api: replicaset update replica-1 10:26:10.796674Z
+api->ctrlmgr: deployment update response MinimumReplicasUnavailable 10:26:10.797806Z
+api->sched: pod to node-02 binding update response 10:26:10.797456Z
+api->ctrlmgr: even response SuccessfulCreate (replication-ctrl)
+kubelet->api: get default namespace token 10:26:10.797435Z
+note over sched: Finished binding for pod
+api->kubelet: return token 10:26:10.800427Z
+kubelet->api: get pod info 10:26:10.801305Z
+kubelet->api: watch secret - token 10:26:10.802783Z
+sched->api: event create Scheduled 10:26:10.803619Z
+note over kubelet: Waiting for volumes to attach and mount for pod
+api->kubelet: return pod info 10:26:10.807531Z
+note over kubelet: Patch status for pod 
+kubelet->api: patch pod ContainerCreating 10:26:10.811408Z
+ctrlmgr->api: deployment update - replicaset is progressing 10:26:10.812170Z
+note over kubelet: Added volume "default-token-gjp77"
+api->kubelet: pod patch response ContainerCreating 10:26:10.821724Z
+api->ctrlmgr: replica update response replica-1 10:26:10.825479Z
+api->sched: event uodate - Scheduled 10:26:10.825848Z
+note over kubelet: mounting the secret volume
+api->ctrlmgr: deployment update - replicaset is progressing 10:26:10.826720Z
+note over kubelet: Creating PodSandbox
+note over  kubelet: create resolve.conf
+kubelet->calico: Calling network plugin cni to set up pod 
+calico->api: get cluster info 10:26:10.997778Z
+api->calico: k8s,kdd,bgp,kubeadm 10:26:11.001015Z
+note over kubelet: set netns
+calico->api: get pod info 10:26:11.492601Z
+api->calico: pod info 10:26:11.493977Z
+calico->api: get namespace info 10:26:11.501669Z
+api->calico: namespace info 10:26:11.501669Z
+note over calico: Calico CNI IPAM request
+calico->api: get ippool info 10:26:11.529981Z
+note over calico: Auto assigning IP
+api->calico: default-ipv4-ippool "10.244.0.0/16" 10:26:11.532041Z
+calico->api: get node info 10:26:11.538818Z
+api->calico: node info podcidr "10.244.1.0/24" 10:26:11.540901Z
+note over calico: Trying affinity for 10.244.205.192/26
+calico->api: blockaffinities minikube "10.244.120.64/26" minikube-m02 "10.244.205.192/26" 10:26:11.547566Z
+api->calico: blockaffinities response 10:26:11.550037Z
+calico->api: get ipamblock 10:26:11.555776Z
+note over calico: Affinity is confirmed and block has been loaded cidr=10.244.205.192/26
+api->calico: return unallocated ip - unallocated 10:26:11.557658Z
+note over calico: Attempting to assign 1 addresses from block block=10.244.205.192/26
+note over calico: 0f416239bc4f08d38807310423d34db6311f7a00060fbce96077b83522cad984
+calico->api: get network 10:26:11.559472Z
+api->calico: 404 not found 10:26:11.560648Z
+calico->api: create network - update 10:26:11.562377Z 
+api->calico: created network 10:26:11.566166Z
+calico->api: found the IP to use , update available IP 10:26:11.568292Z
+api->calico: updated the data store 10:26:11.572852Z
+calico->api: get ippamconfig 10:26:11.574744Z
+api->calico: 404 not found 10:26:11.576455Z
+note over calico: Successfully claimed IPs: [10.244.205.196/26] block=10.244.205.192/26
+calico->api: update pod status ip "10.244.205.196/32" 10:26:11.586423Z
+api->calico: updated pod 10:26:11.590928Z
+note over kubelet: Setting the host side veth name to cali4b408726db4
+note over kubelet: Disabling IPv4 forwarding
+note over kubelet: Added Mac, interface name, and active container ID to endpoint
+note over kubelet: Pulling image "nginx:1.14.2" without credentials
+kubelet->api: event - Pulling image  10:26:11.618638Z
+api->kubelet: event response 10:26:11.621730Z
+note over kubelet: pulled image
+kubelet->api: event - pulled image 10:28:10.520821Z
+api->kubelet: event response 10:28:10.525530Z
+kubelet->api: event created conatiner 10:28:10.554835Z
+api->kubelet: event created container response 10:28:10.557069Z
+note over kubelet: cpu_manager - update container resources
+note over kubelet: start container
+kubelet->api: event started container 10:28:10.645014Z
+api->kubelet: event started container response 10:28:10.648991Z
+kubelet->api: get pod 10:28:11.669492Z
+api->kubelet: pod info 10.244.205.196/32 10:28:11.671734Z
+kubelet->api: patch pod Running 10:28:11.674242Z
+api->kubelet: patch response 10:28:11.680142Z
+ctrlmgr->api: replicasets update readyReplicas 1 10:28:11.684863Z
+ctrlmgr->api: update deployment Deployment has minimum availability and running  10:28:11.689487Z
+api->ctrlmgr: replica update response 10:28:11.691677Z
+ctrlmgr->api: deploymnet status update response  10:28:11.694291Z
+
+
+</pre></div><script type="text/javascript" src="https://www.websequencediagrams.com/service.js"></script>
